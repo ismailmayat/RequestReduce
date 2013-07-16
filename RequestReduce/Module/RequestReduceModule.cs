@@ -3,6 +3,7 @@ using System.Web;
 using RequestReduce.Configuration;
 using RequestReduce.Handlers;
 using RequestReduce.IOC;
+using System.Configuration;
 
 namespace RequestReduce.Module
 {
@@ -14,10 +15,14 @@ namespace RequestReduce.Module
 
         public void Init(HttpApplication context)
         {
-            context.ReleaseRequestState += (sender, e) => InstallFilter(new HttpContextWrapper(((HttpApplication)sender).Context));
-            context.PreSendRequestHeaders += (sender, e) => InstallFilter(new HttpContextWrapper(((HttpApplication)sender).Context));
-            context.BeginRequest += (sender, e) => HandleRRContent(new HttpContextWrapper(((HttpApplication)sender).Context), false);
-            context.PostAuthenticateRequest += (sender, e) => HandleRRContent(new HttpContextWrapper(((HttpApplication)sender).Context), true);
+            //We only run the handler if the user is not in debug mode
+            if (ConfigurationManager.AppSettings["umbracoDebugMode"].ToLower() == "false")
+            {
+                context.ReleaseRequestState += (sender, e) => InstallFilter(new HttpContextWrapper(((HttpApplication)sender).Context));
+                context.PreSendRequestHeaders += (sender, e) => InstallFilter(new HttpContextWrapper(((HttpApplication)sender).Context));
+                context.BeginRequest += (sender, e) => HandleRRContent(new HttpContextWrapper(((HttpApplication)sender).Context), false);
+                context.PostAuthenticateRequest += (sender, e) => HandleRRContent(new HttpContextWrapper(((HttpApplication)sender).Context), true);
+            }
         }
 
         public void HandleRRContent(HttpContextBase httpContext, bool postAuth)
